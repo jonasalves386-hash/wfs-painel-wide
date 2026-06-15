@@ -1,0 +1,458 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #2a2d33;
+  --surface:     #32363e;
+  --surface2:    #3a3e48;
+  --surface3:    #42464f;
+  --border:      #3a3e47;
+  --border2:     #4a4f5a;
+  --text:        #ffffff;
+  --text-muted:  #c0c4d0;
+  --text-dim:    #8890a0;
+  --accent:      #e63946;
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Inter', sans-serif;
+
+  --red-bg:      #4a0d0d;
+  --red-border:  #cc1a1a;
+  --red-text:    #ff4444;
+
+  --gray-bg:     #353840;
+  --gray-border: #42464f;
+  --gray-text:   #a0a8b8;
+
+  --tempo-atrasado: #ff4444;
+  --tempo-urgente:  #ff8c00;
+  --tempo-alerta:   #fbbf24;
+  --tempo-normal:   #a0a8b8;
+
+  /* alturas — máxima compactação */
+  --h-header: 64px;
+  --h-ticker: 15px;
+  --h-th:     30px;
+  --h-info:   10px;
+  --h-sep:     1px;
+  --h-svc:    80px;
+
+  /* largura das colunas de voo — finas */
+  --w-label:  100px;
+  --w-col:   68px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+/* ── HEADER — máxima compactação ── */
+.header {
+  height: var(--h-header);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  padding: 40px 12px;
+  gap: 10px;
+}
+
+
+.logo-img {
+  height: 70px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.logo-info { line-height: 1.1; }
+
+.logo-title {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border2);
+  flex-shrink: 0;
+}
+
+.live { display: flex; align-items: center; gap: 5px; }
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 9px #22c55e;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+.live-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: #22c55e;
+  letter-spacing: 2px;
+}
+
+.spacer { flex: 1; }
+
+.stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 3px;
+  text-align: center;
+  min-width: 70px;
+}
+
+.stat.danger { background: #5d1f1f; border-color: #8b1a1a; }
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: 9px;
+}
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.stat.danger .stat-value { color: var(--red-text); }
+
+.clock {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* ── TABLE WRAP — encostado nas bordas ── */
+.table-wrap {
+  height: calc(100vh - var(--h-header) - var(--h-ticker));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0; /* zero padding — cola nas bordas */
+}
+
+.table-wrap::-webkit-scrollbar { height: 2px; }
+.table-wrap::-webkit-scrollbar-track { background: transparent; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* ── TABLE ── */
+table {
+  border-collapse: collapse;
+  height: 100%;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* ── LABEL esquerda fixa ── */
+td.row-label, th.row-label {
+  background: var(--surface2);
+  border-bottom: 2px solid var(--border);
+  text-align: center;
+  padding: 0 18px;
+  white-space: nowrap;
+  position: sticky;
+  left: 0; 
+  z-index: 5;
+  width: var(--w-label);
+  min-width: var(--w-label);
+  max-width: var(--w-label);
+}
+td.row-label,
+th.row-label {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  background: var(--surface2);
+}
+
+/* 🔥 LINHA VERMELHA FIXA */
+td.row-label::after,
+th.row-label::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -1px;
+  width: 3px;
+  height: 100%;
+  background: var(--accent);
+  z-index: 30;
+}
+
+th.row-label {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  height: var(--h-th);
+  border-bottom: 2px solid var(--accent);
+}
+
+td.row-label {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── SEPARADOR ── */
+tr.sep-row td {
+  height: var(--h-sep);
+  background: var(--accent);
+  padding: 0;
+  border: none;
+}
+
+/* ── CABEÇALHO VOO — número grande, coluna fina ── */
+th.col-voo {
+  font-family: var(--mono);
+  font-size: 30px;   /* número do voo GRANDE */
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0;
+  text-align: center;
+  padding: 0 1px;
+  height: var(--h-th);
+  border-right: 2px solid var(--border);
+  border-bottom: 2px solid var(--accent);
+  background: var(--surface2);
+  width: var(--w-col);
+  min-width: var(--w-col);
+  max-width: var(--w-col);
+  overflow: hidden;
+}
+
+th.col-voo.has-pending { color: #ffffff; }
+
+/* ── CÉLULAS INFO ── */
+td.cell-info {
+  font-family: var(--mono);
+  font-size: 27px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 4px;
+  height: var(--h-info);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  width: var(--w-col);
+  min-width: var(--w-col);
+  max-width: var(--w-col);
+}
+
+td.cell-info.cell-tempo { font-size: 20px; }
+
+td.t-atrasado { color: var(--tempo-atrasado); font-weight: 700; }
+td.t-urgente  { color: var(--tempo-urgente);  font-weight: 700; }
+td.t-alerta   { color: var(--tempo-alerta);   font-weight: 700; }
+td.t-normal   { color: var(--text-muted); }
+
+/* ── CÉLULAS SERVIÇO — Andon: célula inteira colorida ── */
+td.cell-svc {
+  text-align: center;
+  padding: 1px;
+  height: var(--h-svc);
+  border-right: 1px solid rgba(255,255,255,0.10);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  width: var(--w-col);
+  min-width: var(--w-col);
+  max-width: var(--w-col);
+}
+
+td.cell-svc.col-pending { background: transparent; }
+
+/* ── CHIP — preenche a célula inteira ── */
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10);
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 0px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.chip-nao {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.chip-esc {
+  background: #2a2e37;
+  color: #6b7280;
+}
+
+/* ── FAROL ANDON ── */
+
+/* CINZA — neutro / aguardando */
+.chip-cinza {
+  background: #3a3e47;
+  color: #5c6372;
+}
+
+/* AZUL — escalado / ok operacional */
+.chip-azul {
+  background: rgb(0, 140, 255);
+  color: #ffffff;
+}
+
+/* AMARELO — atenção / prazo se aproximando */
+.chip-amarelo {
+  background: #d9cb06;
+  color: #ffffff;
+}
+
+/* AMARELO PISCANDO — atenção / prazo se aproximando */
+.chip-amarelo-piscando {
+  background: #d9cb06;
+  color: #ffffff;
+  animation: blinkAmarelo 0.72s steps(1) infinite;
+}
+
+@keyframes blinkAmarelo {
+  0%, 100% { background: #d9cb06; }
+  50%       { background: #3d3800; }
+}
+
+/* VERMELHO — crítico / pisca Andon */
+.chip-vermelho {
+  background: #dc2626;
+  color: #ffffff;
+  animation: blinkCritical 0.72s steps(1) infinite;
+}
+
+@keyframes blinkCritical {
+  0%, 100% { background: #dc2626; }
+  50%       { background: #2d0a0a; }
+}
+
+/* VERDE — ok / confirmado */
+.chip-verde {
+  background: #00ff0d;
+  color: #ffffff;
+}
+
+/* ── TICKER ── */
+.ticker {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--h-ticker);
+  background: var(--surface);
+  border-top: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 200;
+}
+
+.ticker-tag {
+  background: var(--surface3);
+  border-right: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 2px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ticker-scroll {
+  display: flex;
+  gap: 60px;
+  padding: 0 30px;
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  animation: tickerMove 50s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes tickerMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+th.col-voo {
+  position: relative;
+}
+
+th.col-voo::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  right: 0;
+  width: 2px;
+  background: #ff0019;
+  opacity: 0.6;
+}
+
+/* ── SOLO — tipo de solo operacional ── */
+td.cell-info.cell-solo {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+td.cell-info.cell-solo-transito {
+  color: #fbbf24;
+}
+
+/* ── TIPO — badge chegada / saída ── */
+td.cell-tipo {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Azul profundo — distinto do chip-azul operacional */
+td.cell-tipo-chegada {
+  background: #0369a1;
+  color: #ffffff;
+}
+
+/* Vinho escuro — distinto do chip-vermelho crítico */
+td.cell-tipo-saida {
+  background: #9f1239;
+  color: #ffffff;
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PAINEL WIDE</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <img class="logo-img" src="assets/LOGOWFS.png" alt="WFS">
+    <div class="logo-info">
+      <div class="logo-title">WIDE BODY - CHEGADA + SAÍDA</div>
+    </div>
+    <div class="divider"></div>
+    <div class="live">
+      <div class="live-dot"></div>
+      <span class="live-text">AO VIVO</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="stat">
+      <span class="stat-label">TOTAL VOOS</span>
+      <span class="stat-value" id="cnt-total">0</span>
+    </div>
+    <div class="divider"></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <!-- ── TABELA TRANSPOSTA ── -->
+  <div class="table-wrap">
+    <table id="painel"></table>
+  </div>
+
+  <!-- ── TICKER ── -->
+  <div class="ticker">
+    <div class="ticker-tag">SISTEMA</div>
+    <div class="ticker-scroll" id="ticker"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="logica.js" defer></script>
+</body>
+</html>
