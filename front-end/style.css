@@ -35,9 +35,9 @@
   --h-sep:     1px;
   --h-svc:    80px;
 
-  /* largura das colunas de voo — finas */
+  /* largura das colunas de voo */
   --w-label:  100px;
-  --w-col:   68px;
+  --w-col:    80px;
 }
 
 html, body { height: 100%; overflow: hidden; }
@@ -232,7 +232,7 @@ tr.sep-row td {
 /* ── CABEÇALHO VOO — número grande, coluna fina ── */
 th.col-voo {
   font-family: var(--mono);
-  font-size: 30px;   /* número do voo GRANDE */
+  font-size: 34px;
   font-weight: 800;
   color: #fff;
   letter-spacing: 0;
@@ -253,7 +253,7 @@ th.col-voo.has-pending { color: #ffffff; }
 /* ── CÉLULAS INFO ── */
 td.cell-info {
   font-family: var(--mono);
-  font-size: 27px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--text-muted);
   text-align: center;
@@ -268,7 +268,7 @@ td.cell-info {
   max-width: var(--w-col);
 }
 
-td.cell-info.cell-tempo { font-size: 20px; }
+td.cell-info.cell-tempo { font-size: 23px; }
 
 td.t-atrasado { color: var(--tempo-atrasado); font-weight: 700; }
 td.t-urgente  { color: var(--tempo-urgente);  font-weight: 700; }
@@ -429,7 +429,7 @@ th.col-voo::after {
 
 /* ── SOLO — tipo de solo operacional ── */
 td.cell-info.cell-solo {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
 }
@@ -440,7 +440,7 @@ td.cell-info.cell-solo-transito {
 
 /* ── TIPO — badge chegada / saída ── */
 td.cell-tipo {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
 }
