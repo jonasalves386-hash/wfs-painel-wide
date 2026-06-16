@@ -36,8 +36,8 @@
   --h-svc:    80px;
 
   /* largura das colunas de voo */
-  --w-label:  100px;
-  --w-col:    80px;
+  --w-label:  150px;
+  --w-col:    120px;
 }
 
 html, body { height: 100%; overflow: hidden; }
@@ -203,7 +203,7 @@ th.row-label::after {
 
 th.row-label {
   font-family: var(--sans);
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: #fff;
   letter-spacing: 1.5px;
@@ -214,7 +214,7 @@ th.row-label {
 
 td.row-label {
   font-family: var(--mono);
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 1px;
@@ -232,7 +232,7 @@ tr.sep-row td {
 /* ── CABEÇALHO VOO — número grande, coluna fina ── */
 th.col-voo {
   font-family: var(--mono);
-  font-size: 34px;
+  font-size: 35px;
   font-weight: 800;
   color: #fff;
   letter-spacing: 0;
@@ -253,7 +253,7 @@ th.col-voo.has-pending { color: #ffffff; }
 /* ── CÉLULAS INFO ── */
 td.cell-info {
   font-family: var(--mono);
-  font-size: 30px;
+  font-size: 35px;
   font-weight: 600;
   color: var(--text-muted);
   text-align: center;
@@ -268,7 +268,7 @@ td.cell-info {
   max-width: var(--w-col);
 }
 
-td.cell-info.cell-tempo { font-size: 23px; }
+td.cell-info.cell-tempo { font-size: 28px; }
 
 td.t-atrasado { color: var(--tempo-atrasado); font-weight: 700; }
 td.t-urgente  { color: var(--tempo-urgente);  font-weight: 700; }
