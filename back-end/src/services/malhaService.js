@@ -37,14 +37,19 @@ function calcTipoSolo(sta, std) {
   return diff <= 180 ? 'TRÂNSITO' : 'NORMAL';
 }
 
+// Reconhece: CANCELADO, CANCEL, CANC, CXL, CNX (com ou sem espaços)
+const TERMOS_CANCELAMENTO = ['CANCEL', 'CANC', 'CXL', 'CNX'];
+
 function isCancelado(...valores) {
-  return valores.some(v =>
-    String(v || '')
+  return valores.some(v => {
+    const texto = String(v || '')
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
-      .toUpperCase()
-      .includes('CANCELADO')
-  );
+      .trim()
+      .toUpperCase();
+    if (!texto) return false;
+    return TERMOS_CANCELAMENTO.some(t => texto.includes(t));
+  });
 }
 
 // Aceita DD/MM/YYYY, DD-MM-YYYY e YYYY-MM-DD → devolve YYYY-MM-DD
@@ -151,12 +156,12 @@ function isCargueira(voo) {
 // ─── PROG WIDE ──────────────────────────────────────────────────────────────
 // Chegadas: B(1)=DATA  C(2)=VOO  D(3)=ORI  E(4)=STA
 // Saídas:   X(23)=DATA Y(24)=VOO Z(25)=DES AA(26)=STD
-// Cancel:   W(22)
+// Cancel:   L(11)=chegada  AG(32)=saída
 async function getProgWide() {
   const sheets = getSheets();
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: PROG_WIDE_SHEET_ID,
-    range: 'PROG WIDE!A:AA',
+    range: 'PROG WIDE!A:AG',
   });
 
   const rows = response.data.values;
@@ -165,7 +170,8 @@ async function getProgWide() {
   const resultado = [];
 
   for (const row of rows.slice(1)) {
-    const cancelado = isCancelado(row[22]);
+    const canceladoChegada = isCancelado(row[11]); // coluna L
+    const canceladoSaida   = isCancelado(row[32]); // coluna AG
 
     const sta      = extrairHorario(row[4]);
     const std      = extrairHorario(row[26]);
@@ -173,7 +179,7 @@ async function getProgWide() {
 
     // Chegada
     const vooChegada = String(row[2] || '').trim();
-    if (!cancelado && vooChegada && !isCargueira(vooChegada)) {
+    if (!canceladoChegada && vooChegada && !isCargueira(vooChegada)) {
       resultado.push({
         tipoOperacao: 'CHEGADA',
         data:         String(row[1] || '').trim(),
@@ -186,7 +192,7 @@ async function getProgWide() {
 
     // Saída
     const vooSaida = String(row[24] || '').trim();
-    if (!cancelado && vooSaida && !isCargueira(vooSaida)) {
+    if (!canceladoSaida && vooSaida && !isCargueira(vooSaida)) {
       resultado.push({
         tipoOperacao: 'SAIDA',
         data:         String(row[23] || '').trim(),
