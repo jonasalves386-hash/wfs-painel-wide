@@ -5,6 +5,29 @@ const PROG_WIDE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const MONITOR_SHEET_ID   = '1RusxsxP7g-PKVJX5b8qPrl_VojLhvflXqdLOQlk88EQ';
 const LOADER_SHEET_ID    = '1xCDNq3dOlFiKdu9ucGa2utuzqsZA4kNEo8Ep2-7autk';
 
+// ─── SINGLETON SHEETS CLIENT ──────────────────────────────────────────────────
+// Reutiliza autenticação e client entre requisições (otimização: evita
+// recriar GoogleAuth + sheets client a cada chamada).
+let _sheetsClient = null;
+
+function getSheets() {
+  if (!_sheetsClient) {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+    _sheetsClient = google.sheets({ version: 'v4', auth });
+  }
+  return _sheetsClient;
+}
+
+// ─── CACHE EM MEMÓRIA ─────────────────────────────────────────────────────────
+// TTL de 25 s: elimina reads redundantes em burst (múltiplas abas, reloads,
+// múltiplos monitores) sem afetar o ciclo normal de 30 s do frontend.
+let _voosCache      = null;
+let _voosCacheExpiry = 0;
+const CACHE_TTL_MS  = 25_000;
+
 function normalizarTipoOperacao(valor) {
   const s = String(valor || '')
     .normalize('NFD')
@@ -12,14 +35,6 @@ function normalizarTipoOperacao(valor) {
     .toUpperCase()
     .trim();
   return s === 'SAIDA' ? 'SAIDA' : 'CHEGADA';
-}
-
-function getSheets() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  });
-  return google.sheets({ version: 'v4', auth });
 }
 
 function extrairHorario(valor) {
@@ -207,58 +222,49 @@ async function getProgWide() {
   return resultado;
 }
 
-// ─── MONITOR CHEGADA ────────────────────────────────────────────────────────
-// A(0)=DATA  B(1)=VOO  D(3)=ORI  F(5)=fallback  G(6)=ETA  M(12)=CODE
-async function getMonitorChegadaWide() {
+// ─── MONITOR (chegada + saídas em 1 batchGet) ───────────────────────────────
+// chegada: A(0)=DATA  B(1)=VOO  D(3)=ORI  F(5)=fallback  G(6)=ETA  M(12)=CODE
+// saídas:  A(0)=DATA  C(2)=fallback  D(3)=ETD  J(9)=DES  K(10)=VOO  L(11)=CODE
+async function getMonitorWide() {
   const sheets = getSheets();
-  const response = await sheets.spreadsheets.values.get({
+  const response = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: MONITOR_SHEET_ID,
-    range: 'monitor_chegada!A:M',
+    ranges: ['monitor_chegada!A:M', 'monitor_saidas!A:L'],
   });
 
-  const rows = response.data.values;
-  if (!rows || rows.length < 2) return [];
+  const [chegadaRange, saidasRange] = response.data.valueRanges;
 
-  return rows.slice(1).map(row => {
-    const eta = extrairHorario(row[6]) || extrairHorario(row[5]); // G, fallback F
-    const { code: codeVoo, numero } = normalizarVoo(row[1]);      // col B
-    const codeCol = String(row[12] || '').trim().toUpperCase();   // col M
+  const rowsCheg = chegadaRange?.values;
+  const chegada = (!rowsCheg || rowsCheg.length < 2) ? [] :
+    rowsCheg.slice(1).map(row => {
+      const eta = extrairHorario(row[6]) || extrairHorario(row[5]); // G, fallback F
+      const { code: codeVoo, numero } = normalizarVoo(row[1]);      // col B
+      const codeCol = String(row[12] || '').trim().toUpperCase();   // col M
+      return {
+        data:      String(row[0] || '').trim(),
+        code:      codeCol || codeVoo,
+        numero,
+        aeroporto: String(row[3] || '').trim(), // col D
+        eta,
+      };
+    }).filter(r => r.numero);
 
-    return {
-      data:      String(row[0] || '').trim(),
-      code:      codeCol || codeVoo,
-      numero,
-      aeroporto: String(row[3] || '').trim(), // col D
-      eta,
-    };
-  }).filter(r => r.numero);
-}
+  const rowsSaid = saidasRange?.values;
+  const saidas = (!rowsSaid || rowsSaid.length < 2) ? [] :
+    rowsSaid.slice(1).map(row => {
+      const etd = extrairHorario(row[3]) || extrairHorario(row[2]); // D, fallback C
+      const { code: codeVoo, numero } = normalizarVoo(row[10]);     // col K
+      const codeCol = String(row[11] || '').trim().toUpperCase();   // col L
+      return {
+        data:      String(row[0] || '').trim(),
+        code:      codeCol || codeVoo,
+        numero,
+        aeroporto: String(row[9] || '').trim(), // col J
+        etd,
+      };
+    }).filter(r => r.numero);
 
-// ─── MONITOR SAÍDAS ─────────────────────────────────────────────────────────
-// A(0)=DATA  C(2)=fallback  D(3)=ETD  J(9)=DES  K(10)=VOO  L(11)=CODE
-async function getMonitorSaidasWide() {
-  const sheets = getSheets();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: MONITOR_SHEET_ID,
-    range: 'monitor_saidas!A:L',
-  });
-
-  const rows = response.data.values;
-  if (!rows || rows.length < 2) return [];
-
-  return rows.slice(1).map(row => {
-    const etd = extrairHorario(row[3]) || extrairHorario(row[2]); // D, fallback C
-    const { code: codeVoo, numero } = normalizarVoo(row[10]);     // col K
-    const codeCol = String(row[11] || '').trim().toUpperCase();   // col L
-
-    return {
-      data:      String(row[0] || '').trim(),
-      code:      codeCol || codeVoo,
-      numero,
-      aeroporto: String(row[9] || '').trim(), // col J
-      etd,
-    };
-  }).filter(r => r.numero);
+  return { chegada, saidas };
 }
 
 // Tenta LA depois JJ, valida aeroporto para evitar match errado
@@ -275,25 +281,27 @@ function buscarMonitorLatam(monitorMap, isoData, numero, tipo, aeroportoProg) {
 
 // ─── GETVOOS ─────────────────────────────────────────────────────────────────
 async function getVoos() {
-  const [progResult, monChegResult, monSaidResult, loaderResult] = await Promise.allSettled([
+  // Retorna do cache se ainda válido (evita reads redundantes em burst)
+  const now = Date.now();
+  if (_voosCache && now < _voosCacheExpiry) {
+    return _voosCache;
+  }
+
+  const [progResult, monitorResult, loaderResult] = await Promise.allSettled([
     getProgWide(),
-    getMonitorChegadaWide(),
-    getMonitorSaidasWide(),
+    getMonitorWide(),
     getLoaderPlanilha(),
   ]);
 
   if (progResult.status === 'rejected') throw progResult.reason;
 
   const progVoos   = progResult.value;
-  const monChegada = monChegResult.status === 'fulfilled' ? monChegResult.value : [];
-  const monSaidas  = monSaidResult.status === 'fulfilled' ? monSaidResult.value : [];
-  const loaderVoos = loaderResult.status  === 'fulfilled' ? loaderResult.value  : [];
+  const monChegada = monitorResult.status === 'fulfilled' ? monitorResult.value.chegada : [];
+  const monSaidas  = monitorResult.status === 'fulfilled' ? monitorResult.value.saidas  : [];
+  const loaderVoos = loaderResult.status  === 'fulfilled' ? loaderResult.value          : [];
 
-  if (monChegResult.status === 'rejected') {
-    console.warn('[getVoos] Monitor chegada indisponível:', monChegResult.reason?.message);
-  }
-  if (monSaidResult.status === 'rejected') {
-    console.warn('[getVoos] Monitor saídas indisponível:', monSaidResult.reason?.message);
+  if (monitorResult.status === 'rejected') {
+    console.warn('[getVoos] Monitor indisponível:', monitorResult.reason?.message);
   }
   if (loaderResult.status === 'rejected') {
     console.warn('[getVoos] Loader indisponível:', loaderResult.reason?.message);
@@ -394,6 +402,9 @@ async function getVoos() {
   const nCheg = voos.filter(v => v.tipoOperacao === 'CHEGADA').length;
   const nSaid = voos.filter(v => v.tipoOperacao === 'SAIDA').length;
   console.log(`[getVoos] WIDE: ${voos.length} voos (${nCheg} chegadas, ${nSaid} saídas)`);
+
+  _voosCache      = voos;
+  _voosCacheExpiry = Date.now() + CACHE_TTL_MS;
 
   return voos;
 }

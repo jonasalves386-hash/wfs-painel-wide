@@ -334,12 +334,12 @@ fetchFlights();
 updateClock();
 
 setInterval(updateClock, 1000);
-setInterval(fetchFlights, 30000);
+setInterval(fetchFlights, 40000);
 
 setInterval(() => {
   if (Date.now() >= nextRotation) rotateLote();
   render();
-}, 30000);
+}, 40000);
 
 // setInterval(() => {
 //   console.log('🔄 Auto reload da página (15 min)');
