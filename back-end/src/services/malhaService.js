@@ -161,7 +161,7 @@ function calcLoaderAndon(loader) {
   return 'CINZA';
 }
 
-const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT'];
+const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT', 'L7'];
 
 function isCargueira(voo) {
   const v = String(voo || '').trim().toUpperCase();
@@ -169,9 +169,9 @@ function isCargueira(voo) {
 }
 
 // ─── PROG WIDE ──────────────────────────────────────────────────────────────
-// Chegadas: B(1)=DATA  C(2)=VOO  D(3)=ORI  E(4)=STA
-// Saídas:   X(23)=DATA Y(24)=VOO Z(25)=DES AA(26)=STD
-// Cancel:   L(11)=chegada  AG(32)=saída
+// Chegadas: A(0)=DATA  B(1)=VOO  C(2)=ORIGEM  D(3)=STA
+// Saídas:   W(22)=DATA  X(23)=VOO  Y(24)=DES  Z(25)=STD
+// Cancel:   K(10)=OBSERVAÇÃO chegada  AG(32)=OBSERVAÇÃO saída
 async function getProgWide() {
   const sheets = getSheets();
   const response = await sheets.spreadsheets.values.get({
@@ -185,34 +185,34 @@ async function getProgWide() {
   const resultado = [];
 
   for (const row of rows.slice(1)) {
-    const canceladoChegada = isCancelado(row[11]); // coluna L
-    const canceladoSaida   = isCancelado(row[32]); // coluna AG
+    const canceladoChegada = isCancelado(row[10]); // coluna K (OBSERVAÇÃO)
+    const canceladoSaida   = isCancelado(row[32]); // coluna AG (OBSERVAÇÃO)
 
-    const sta      = extrairHorario(row[4]);
-    const std      = extrairHorario(row[26]);
+    const sta      = extrairHorario(row[3]);  // coluna D
+    const std      = extrairHorario(row[25]); // coluna Z
     const tipoSolo = calcTipoSolo(sta, std);
 
     // Chegada
-    const vooChegada = String(row[2] || '').trim();
+    const vooChegada = String(row[1] || '').trim(); // coluna B
     if (!canceladoChegada && vooChegada && !isCargueira(vooChegada)) {
       resultado.push({
         tipoOperacao: 'CHEGADA',
-        data:         String(row[1] || '').trim(),
+        data:         String(row[0] || '').trim(), // coluna A
         voo:          vooChegada,
-        aeroporto:    String(row[3] || '').trim(),
+        aeroporto:    String(row[2] || '').trim(), // coluna C
         horarioBase:  sta,
         tipoSolo,
       });
     }
 
     // Saída
-    const vooSaida = String(row[24] || '').trim();
+    const vooSaida = String(row[23] || '').trim(); // coluna X
     if (!canceladoSaida && vooSaida && !isCargueira(vooSaida)) {
       resultado.push({
         tipoOperacao: 'SAIDA',
-        data:         String(row[23] || '').trim(),
+        data:         String(row[22] || '').trim(), // coluna W
         voo:          vooSaida,
-        aeroporto:    String(row[25] || '').trim(),
+        aeroporto:    String(row[24] || '').trim(), // coluna Y
         horarioBase:  std,
         tipoSolo,
       });
@@ -306,6 +306,7 @@ async function getVoos() {
   if (loaderResult.status === 'rejected') {
     console.warn('[getVoos] Loader indisponível:', loaderResult.reason?.message);
   }
+
 
   // Mapa de lookup do Loader: mesma chave dos voos WIDE (isoData_code_numero_tipo)
   const mapLoader = new Map();
