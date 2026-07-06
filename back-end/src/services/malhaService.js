@@ -43,6 +43,26 @@ function extrairHorario(valor) {
   return match ? match[0] : '';
 }
 
+// Para ETD do monitor_saidas: se o valor vier com data ("07/07/2026 11:00:00"),
+// valida se é hoje antes de extrair o horário.
+// Hoje → retorna HH:MM. Outro dia → retorna "DD/MM" (falha isHorarioValido, voo sai do painel).
+// Sem data → comportamento normal de extrairHorario.
+function extrairHorarioETD(valor) {
+  const texto = String(valor || '').trim();
+  const comData = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (comData) {
+    const isoValor = `${comData[3]}-${comData[2]}-${comData[1]}`;
+    const hojeBR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const hojeISO = [
+      hojeBR.getFullYear(),
+      String(hojeBR.getMonth() + 1).padStart(2, '0'),
+      String(hojeBR.getDate()).padStart(2, '0'),
+    ].join('-');
+    if (isoValor !== hojeISO) return `${comData[1]}/${comData[2]}`; // ex: "07/07" → inválido
+  }
+  return extrairHorario(texto);
+}
+
 function calcTipoSolo(sta, std) {
   if (!sta || !std) return null;
   const [hSta, mSta] = sta.split(':').map(Number);
@@ -161,7 +181,7 @@ function calcLoaderAndon(loader) {
   return 'CINZA';
 }
 
-const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT', 'L7'];
+const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT', 'L7', 'GT'];
 
 function isCargueira(voo) {
   const v = String(voo || '').trim().toUpperCase();
@@ -252,7 +272,7 @@ async function getMonitorWide() {
   const rowsSaid = saidasRange?.values;
   const saidas = (!rowsSaid || rowsSaid.length < 2) ? [] :
     rowsSaid.slice(1).map(row => {
-      const etd = extrairHorario(row[3]) || extrairHorario(row[2]); // D, fallback C
+      const etd = extrairHorarioETD(row[3]) || extrairHorarioETD(row[2]); // D, fallback C
       const { code: codeVoo, numero } = normalizarVoo(row[10]);     // col K
       const codeCol = String(row[11] || '').trim().toUpperCase();   // col L
       return {
