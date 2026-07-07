@@ -142,10 +142,10 @@ function estaNaJanelaOperacional(horario) {
 // R(17)=Nº LOADER 2   S(18)=OPERADOR 2   T(19)=CHEGADA OP 2
 async function getLoaderPlanilha() {
   const sheets = getSheets();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: LOADER_SHEET_ID,
-    range: 'LOADER!A:T',
-  });
+  const response = await sheets.spreadsheets.values.get(
+    { spreadsheetId: LOADER_SHEET_ID, range: 'LOADER!A:T' },
+    { timeout: 10000 }
+  );
 
   const rows = response.data.values;
   if (!rows || rows.length < 2) return [];
@@ -194,10 +194,10 @@ function isCargueira(voo) {
 // Cancel:   K(10)=OBSERVAÇÃO chegada  AG(32)=OBSERVAÇÃO saída
 async function getProgWide() {
   const sheets = getSheets();
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: PROG_WIDE_SHEET_ID,
-    range: 'PROG WIDE!A:AG',
-  });
+  const response = await sheets.spreadsheets.values.get(
+    { spreadsheetId: PROG_WIDE_SHEET_ID, range: 'PROG WIDE!A:AG' },
+    { timeout: 10000 }
+  );
 
   const rows = response.data.values;
   if (!rows || rows.length < 2) return [];
@@ -247,10 +247,10 @@ async function getProgWide() {
 // saídas:  A(0)=DATA  C(2)=fallback  D(3)=ETD  J(9)=DES  K(10)=VOO  L(11)=CODE
 async function getMonitorWide() {
   const sheets = getSheets();
-  const response = await sheets.spreadsheets.values.batchGet({
-    spreadsheetId: MONITOR_SHEET_ID,
-    ranges: ['monitor_chegada!A:M', 'monitor_saidas!A:L'],
-  });
+  const response = await sheets.spreadsheets.values.batchGet(
+    { spreadsheetId: MONITOR_SHEET_ID, ranges: ['monitor_chegada!A:M', 'monitor_saidas!A:L'] },
+    { timeout: 10000 }
+  );
 
   const [chegadaRange, saidasRange] = response.data.valueRanges;
 
