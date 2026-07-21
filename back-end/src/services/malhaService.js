@@ -181,7 +181,7 @@ function calcLoaderAndon(loader) {
   return 'CINZA';
 }
 
-const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT', 'L7', 'GT', 'SID', 'WD'];
+const COMPANHIAS_CARGUEIRAS = ['M3', '5Y', 'CV', 'UC', 'QT', 'L7', 'GT', 'SID', 'WD', 'ZC'];
 
 function isCargueira(voo) {
   const v = String(voo || '').trim().toUpperCase();
